@@ -17,13 +17,13 @@ headers = {
     'Accept': 'application/vnd.github.v3+json',
 }
 
-def fetch_and_save_merged_prs(user, start_date, end_date):
+def fetch_and_save_merged_prs(user, target_dir, start_date, end_date):
     page = 1
 
     while True:
         print(f"Processing page {page}...")
 
-        output_file = f'data/{username}/merged_prs_data_page_{page}.json'
+        output_file = f'{target_dir}/merged_prs_data_page_{page}.json'
         if os.path.exists(output_file):
             print(f"Skipping page {page}, file already exists.")
             page += 1
@@ -45,10 +45,14 @@ def fetch_and_save_merged_prs(user, start_date, end_date):
 
 # 日付範囲の設定
 start_date = '2023-07-01'
-end_date = datetime.now().strftime('%Y-%m-%d')
+end_date = '2023-12-31'
+target_dir = f'data/{username}'
+# ディレクトリが存在しない場合にのみ作成
+if not os.path.exists(target_dir):
+    os.mkdir(target_dir)
 
 # マージされたPRの情報を取得し、ファイルに保存
-fetch_and_save_merged_prs(username, start_date, end_date)
+fetch_and_save_merged_prs(username, target_dir, start_date, end_date)
 
 # PRをカウント
 def count_prs_by_repo(file_paths):
@@ -64,7 +68,7 @@ def count_prs_by_repo(file_paths):
     return repo_pr_count
 
 # 'data/' ディレクトリ内のJSONファイルを取得
-cache_files = [f'data/{username}/{f}' for f in os.listdir('data/{username}') if f.startswith('merged_prs_data_page_')]
+cache_files = [f'{target_dir}/{f}' for f in os.listdir(target_dir) if f.startswith('merged_prs_data_page_')]
 
 # リポジトリごとのPR数をカウント
 pr_count_by_repo = count_prs_by_repo(cache_files)
@@ -75,4 +79,4 @@ print(f'{pr_count_by_repo}')
 for repo, count in pr_count_by_repo.items():
     print(f'{repo} {count}')
 
-print("All results saved to individual files.")
+print(f'{username} Total Merged PRs: {sum(pr_count_by_repo.values())}')
