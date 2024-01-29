@@ -5,7 +5,7 @@ from datetime import datetime
 
 # 環境変数からGitHub Personal Access Tokenを取得
 token = os.getenv('GITHUB_TOKEN')
-your_username = os.getenv('GITHUB_USERNAME')  # あなたのGitHubユーザー名
+username = os.getenv('GITHUB_USERNAME')  # あなたのGitHubユーザー名
 
 # GitHub APIのヘッダー設定
 headers = {
@@ -16,7 +16,7 @@ headers = {
 def fetch_and_cache_commented_prs(username, start_date, end_date):
     page = 1
     while True:
-        cache_file = f'data/commented_prs_page_{page}.json'
+        cache_file = f'data/{username}/commented_prs_page_{page}.json'
 
         # キャッシュが既に存在する場合はスキップ
         if os.path.exists(cache_file):
@@ -58,10 +58,10 @@ start_date = '2023-07-01'
 end_date = datetime.now().strftime('%Y-%m-%d')
 
 # APIからデータを取得してキャッシュに保存
-fetch_and_cache_commented_prs(your_username, start_date, end_date)
+fetch_and_cache_commented_prs(username, start_date, end_date)
 
 # キャッシュされたデータからコメントをカウント
-cache_files = [f'data/{f}' for f in os.listdir('data/') if f.startswith('commented_prs_page_')]
+cache_files = [f'data/{username}/{f}' for f in os.listdir('data/{username}') if f.startswith('commented_prs_page_')]
 
 your_comments_count_by_repo = count_prs_by_repo(cache_files)
 print(f'{your_comments_count_by_repo}')

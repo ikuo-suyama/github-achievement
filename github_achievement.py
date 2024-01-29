@@ -23,7 +23,7 @@ def fetch_and_save_merged_prs(user, start_date, end_date):
     while True:
         print(f"Processing page {page}...")
 
-        output_file = f'data/merged_prs_data_page_{page}.json'
+        output_file = f'data/{username}/merged_prs_data_page_{page}.json'
         if os.path.exists(output_file):
             print(f"Skipping page {page}, file already exists.")
             page += 1
@@ -64,7 +64,7 @@ def count_prs_by_repo(file_paths):
     return repo_pr_count
 
 # 'data/' ディレクトリ内のJSONファイルを取得
-cache_files = [f'data/{f}' for f in os.listdir('data/') if f.endswith('.json')]
+cache_files = [f'data/{username}/{f}' for f in os.listdir('data/{username}') if f.startswith('merged_prs_data_page_')]
 
 # リポジトリごとのPR数をカウント
 pr_count_by_repo = count_prs_by_repo(cache_files)
