@@ -3,11 +3,9 @@ import os
 import json
 from datetime import datetime
 
-# 環境変数からGitHub Personal Access Tokenを取得
 token = os.getenv('GITHUB_TOKEN')
-username = os.getenv('GITHUB_USERNAME')  # あなたのGitHubユーザー名
+username = os.getenv('GITHUB_USERNAME')
 
-# GitHub APIのヘッダー設定
 headers = {
     'Authorization': f'token {token}',
     'Accept': 'application/vnd.github.v3+json',
@@ -18,7 +16,6 @@ def fetch_and_cache_commented_prs(username, target_dir, start_date, end_date):
     while True:
         cache_file = f'{target_dir}/commented_prs_page_{page}.json'
 
-        # キャッシュが既に存在する場合はスキップ
         if os.path.exists(cache_file):
             print(f"Skipping page {page}, cache file already exists.")
             page += 1
