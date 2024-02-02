@@ -3,15 +3,12 @@ import os
 import json
 from datetime import datetime
 
-# 環境変数からGitHub Personal Access Tokenとユーザー名を取得
 token = os.getenv('GITHUB_TOKEN')
 username = os.getenv('GITHUB_USERNAME')
 
-# 環境変数が設定されていない場合のエラーチェック
 if not token or not username:
     raise ValueError("GitHub token and username must be set as environment variables.")
 
-# GitHub APIのヘッダー設定
 headers = {
     'Authorization': f'token {token}',
     'Accept': 'application/vnd.github.v3+json',
@@ -65,7 +62,6 @@ def create_pr_list(target_dir, file_paths):
         file.write(buffer)
 
 
-# PRをカウント
 def count_prs_by_repo(file_paths):
     repo_pr_count = {}
 
@@ -78,26 +74,22 @@ def count_prs_by_repo(file_paths):
 
     return repo_pr_count
 
-# 日付範囲の設定
+# Specify the period
 start_date = '2023-07-01'
 end_date = '2023-12-31'
+
 target_dir = f'data/{username}'
-# ディレクトリが存在しない場合にのみ作成
 if not os.path.exists(target_dir):
     os.mkdir(target_dir)
 
-# マージされたPRの情報を取得し、ファイルに保存
 fetch_and_save_merged_prs(username, target_dir, start_date, end_date)
 
-# 'data/' ディレクトリ内のJSONファイルを取得
 cache_files = [f'{target_dir}/{f}' for f in os.listdir(target_dir) if f.startswith('merged_prs_data_page_')]
 
 create_pr_list(target_dir, cache_files)
 
-# リポジトリごとのPR数をカウント
 pr_count_by_repo = count_prs_by_repo(cache_files)
 
-# 結果の表示
 print(f'{pr_count_by_repo}')
 
 for repo, count in pr_count_by_repo.items():

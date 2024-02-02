@@ -29,7 +29,8 @@ def fetch_and_cache_commented_prs(username, target_dir, start_date, end_date):
                f'&type=Issues&page={page}')
         response = requests.get(url, headers=headers)
         data = response.json()
-        prs = data['items']
+        if 'items' in data:
+            prs = data['items']
 
         if not prs:
             break
@@ -72,19 +73,16 @@ def create_pr_list(target_dir, file_paths):
     with open(f'{target_dir}/reviewed_pr_list.md', 'w') as file:
         file.write(buffer)
 
-
-# 日付範囲の設定
+# Specify the period
 start_date = '2023-07-01'
 end_date = '2023-12-31'
 target_dir = f'data/{username}'
-# ディレクトリが存在しない場合にのみ作成
+
 if not os.path.exists(target_dir):
     os.mkdir(target_dir)
 
-# APIからデータを取得してキャッシュに保存
 fetch_and_cache_commented_prs(username, target_dir, start_date, end_date)
 
-# キャッシュされたデータからコメントをカウント
 cache_files = [f'{target_dir}/{f}' for f in os.listdir(target_dir) if f.startswith('commented_prs_page_')]
 
 create_pr_list(target_dir, cache_files)
