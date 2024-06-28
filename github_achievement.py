@@ -1,20 +1,10 @@
 import requests
 import os
 import json
+import click
 from datetime import datetime
 
-token = os.getenv('GITHUB_TOKEN')
-username = os.getenv('GITHUB_USERNAME')
-
-if not token or not username:
-    raise ValueError("GitHub token and username must be set as environment variables.")
-
-headers = {
-    'Authorization': f'token {token}',
-    'Accept': 'application/vnd.github.v3+json',
-}
-
-def fetch_and_save_merged_prs(user, target_dir, start_date, end_date):
+def fetch_and_save_merged_prs(headers, user, target_dir, start_date, end_date):
     page = 1
 
     while True:
@@ -74,25 +64,41 @@ def count_prs_by_repo(file_paths):
 
     return repo_pr_count
 
-# Specify the period
-start_date = '2023-07-01'
-end_date = '2023-12-31'
+@click.command()
+@click.option('-u', '--user_name', required=True, help='Start date in YYYY-MM-DD format')
+@click.option('-s', '--start_date', required=True, help='Start date in YYYY-MM-DD format')
+@click.option('-e', '--end_date', required=True, help='End date in YYYY-MM-DD format')
+def main(user_name, start_date, end_date):
+    # Prepare global value
+    token = os.getenv('GITHUB_TOKEN')
+    if not token:
+        raise ValueError("GitHub token and must be set as environment variables.")
 
-target_dir = f'data/{username}'
-if not os.path.exists(target_dir):
-    os.mkdir(target_dir)
+    headers = {
+        'Authorization': f'token {token}',
+        'Accept': 'application/vnd.github.v3+json',
+    }
 
-fetch_and_save_merged_prs(username, target_dir, start_date, end_date)
+    print('f {username}: {start_date} {end_date}')
+    target_dir = f'data/{user_name}'
+    if not os.path.exists(target_dir):
+        os.mkdir(target_dir)
 
-cache_files = [f'{target_dir}/{f}' for f in os.listdir(target_dir) if f.startswith('merged_prs_data_page_')]
+    fetch_and_save_merged_prs(headers, user_name, target_dir, start_date, end_date)
 
-create_pr_list(target_dir, cache_files)
+    cache_files = [f'{target_dir}/{f}' for f in os.listdir(target_dir) if f.startswith('merged_prs_data_page_')]
 
-pr_count_by_repo = count_prs_by_repo(cache_files)
+    create_pr_list(target_dir, cache_files)
 
-print(f'{pr_count_by_repo}')
+    pr_count_by_repo = count_prs_by_repo(cache_files)
 
-for repo, count in pr_count_by_repo.items():
-    print(f'{repo} {count}')
+    print(f'{pr_count_by_repo}')
 
-print(f'{username} Total Merged PRs: {sum(pr_count_by_repo.values())}')
+    for repo, count in pr_count_by_repo.items():
+        print(f'{repo} {count}')
+
+    print(f'{user_name} Total Merged PRs: {sum(pr_count_by_repo.values())}')
+
+
+if __name__ == '__main__':
+    main()
