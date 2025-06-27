@@ -1,17 +1,10 @@
 import requests
 import os
 import json
+import click
 from datetime import datetime
 
-token = os.getenv('GITHUB_TOKEN')
-username = os.getenv('GITHUB_USERNAME')
-
-headers = {
-    'Authorization': f'token {token}',
-    'Accept': 'application/vnd.github.v3+json',
-}
-
-def fetch_and_cache_commented_prs(username, target_dir, start_date, end_date):
+def fetch_and_cache_commented_prs(headers, username, target_dir, start_date, end_date):
     page = 1
     while True:
         cache_file = f'{target_dir}/commented_prs_page_{page}.json'
@@ -70,24 +63,41 @@ def create_pr_list(target_dir, file_paths):
     with open(f'{target_dir}/reviewed_pr_list.md', 'w') as file:
         file.write(buffer)
 
-# Specify the period
-start_date = '2023-07-01'
-end_date = '2023-12-31'
-target_dir = f'data/{username}'
+@click.command()
+@click.option('-u', '--user_name', required=True, help='Start date in YYYY-MM-DD format')
+@click.option('-s', '--start_date', required=True, help='Start date in YYYY-MM-DD format')
+@click.option('-e', '--end_date', required=True, help='End date in YYYY-MM-DD format')
+def main(user_name, start_date, end_date):
+    token = os.getenv('GITHUB_TOKEN')
+    if not token:
+        raise ValueError("GitHub token and must be set as environment variables.")
 
-if not os.path.exists(target_dir):
-    os.mkdir(target_dir)
+    headers = {
+        'Authorization': f'token {token}',
+        'Accept': 'application/vnd.github.v3+json',
+    }
 
-fetch_and_cache_commented_prs(username, target_dir, start_date, end_date)
 
-cache_files = [f'{target_dir}/{f}' for f in os.listdir(target_dir) if f.startswith('commented_prs_page_')]
+    target_dir = f'data/{user_name}'
 
-create_pr_list(target_dir, cache_files)
+    if not os.path.exists(target_dir):
+        os.mkdir(target_dir)
 
-your_comments_count_by_repo = count_prs_by_repo(cache_files)
-print(f'{your_comments_count_by_repo}')
+    fetch_and_cache_commented_prs(headers, user_name, target_dir, start_date, end_date)
 
-for repo, count in your_comments_count_by_repo.items():
-    print(f'{repo} {count}')
+    cache_files = [f'{target_dir}/{f}' for f in os.listdir(target_dir) if f.startswith('commented_prs_page_')]
 
-print(f'{username} Total PR Reviews: {sum(your_comments_count_by_repo.values())}')
+    create_pr_list(target_dir, cache_files)
+
+    your_comments_count_by_repo = count_prs_by_repo(cache_files)
+    print(f'{your_comments_count_by_repo}')
+
+    for repo, count in your_comments_count_by_repo.items():
+        print(f'{repo} {count}')
+
+    print(f'{user_name} Total PR Reviews: {sum(your_comments_count_by_repo.values())}')
+
+
+
+if __name__ == '__main__':
+    main()
